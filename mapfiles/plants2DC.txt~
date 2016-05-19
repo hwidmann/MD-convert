@@ -1,0 +1,13 @@
+'Common name' > 'dc:identifier'
+'Scientific name' > 'dc:title'
+'Location' > 'dc:coverage'
+'Temperament' > 'dc:relation'
+'Diet' > 'dc:source'
+'Water' > 'dc:description'
+'Size' > 'dcterms:extent'
+'Region of the Aquarium' > 'dc:spatial'
+'Breeding' > 'dc:type\r' 
+
+
+
+    

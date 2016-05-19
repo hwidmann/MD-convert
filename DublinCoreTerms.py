@@ -30,8 +30,8 @@ class DublinCore(dublinCoreMetadata):
 		xmlOut += '''\n<%s
     xmlns="http://example.org/myapp/"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="%s",
-    xmlns:dc="http://purl.org/dc/elements/1.1/",
+    xsi:schemaLocation="%s"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dcterms="http://purl.org/dc/terms/">\n\n''' % (encapsulatingTag, schemaLocation)
 		
 		#if the Title element is set, make the dc:title tag

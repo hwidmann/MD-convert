@@ -17,32 +17,24 @@ DC_NS = 'http://purl.org/dc/elements/1.1/'
 XSI_NS = 'http://www.w3.org/2001/XMLSchema-instance'
 MACREPO_NS = 'http://repository.mcmaster.ca/schema/macrepo/elements/1.0/'
 
-class TabFile(object):
-	""" A dialect for the csv.DictReader constructor """
-	def __init__ (self, delimiter):
-		self.delimiter = delimiter
-
 def parse(fn,opt):
 	""" Parse a TSV file """
 	try:
 		fp = open(fn)
-		print 'oppp %s' % opt.delimiter
-		
-		fields = re.split(opt.delimiter,fp.readline().rstrip('\n'))###.split(opt.delimiter)
-		print 'fields %s' % fields
+		fields = re.split(opt.delimiter,fp.readline().rstrip('\n'))
 		if not opt.delimiter == ',' :
-			tsv = csv.DictReader(fp, fieldnames=fields, delimiter='\t')##TabFile(opt.delimiter).delimiter)
+			tsv = csv.DictReader(fp, fieldnames=fields, delimiter='\t')
 		else:
 			tsv = csv.DictReader(fp, fieldnames=fields, delimiter=opt.delimiter)
 		if (not os.path.isdir(opt.outdir)):
 			os.makedirs(opt.outdir)
 		
 		for row in tsv:
-			##print 'row : %s' % row 
 			dc = makedc(row)
-			writefile(opt.outdir+'/'+row['dc:identifier'], dc)
-			xml = makexml(row)
-			writefile(opt.outdir+'/'+row['dc:identifier'], xml)
+			print '+++ %s' % row['dc:identifier'].strip()
+			writefile(opt.outdir+'/'+"".join(row['dc:identifier'].split()), dc)
+			##xml = makexml(row)
+			##writefile(opt.outdir+'/'+row['dc:identifier'], xml)
 	except IOError as (errno, strerror):
 		print "Error ({0}): {1}".format(errno, strerror)
 		raise SystemExit
@@ -92,9 +84,9 @@ def writefile(name, obj):
 	if isinstance(obj, DublinCore):
 		fp = open(name + '-DC.xml', 'w')
 		fp.write(obj.makeXML(DC_NS))
-	elif isinstance(obj, Document):
-		fp = open(name + '-macrepo.xml', 'w')
-		fp.write(obj.toprettyxml())
+##	elif isinstance(obj, Document):
+##		fp = open(name + '-macrepo.xml', 'w')
+##		fp.write(obj.toprettyxml())
 	fp.close()
 
 def chkarg(arg):
@@ -112,6 +104,8 @@ if __name__ == "__main__":
                   help="output directory for Dublincore XML files", metavar="FILE")
 	parser.add_option("-d", "--delimiter",
                   default=',',help="the delimiter used in the original data")
+	parser.add_option("-m", "--mapfile",
+                  default='mapfiles/plants2DC.txt',help="the file that specifies the mapping from original to DC fields")
 
 	(options, args) = parser.parse_args()
 
