@@ -4,7 +4,7 @@ from dublincore import dublinCoreMetadata
 class DublinCore(dublinCoreMetadata):
 	def __init__(self):
 		dublinCoreMetadata.__init__(self)
-		self.Relation = []
+		### self.Relation = []
 	
 	def makeXML(self, schemaLocation, encapsulatingTag='metadata'):
 		"""
@@ -31,7 +31,6 @@ class DublinCore(dublinCoreMetadata):
     xmlns="http://example.org/myapp/"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="%s"
-    xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dcterms="http://purl.org/dc/terms/">\n\n''' % (encapsulatingTag, schemaLocation)
 		
 		#if the Title element is set, make the dc:title tag
@@ -45,6 +44,10 @@ class DublinCore(dublinCoreMetadata):
 		#if the Extent term is set, make the dcterms:extent tag
 		if self.Extent:
 			xmlOut += '\t<dcterms:extent>%s</dcterms:extent>\n' % xml.sax.saxutils.escape(self.Extent)
+		
+		#if the Spatial term is set, make the dcterms:spatial tag
+		if self.Spatial:
+			xmlOut += '\t<dcterms:spatial>%s</dcterms:spatial>\n' % xml.sax.saxutils.escape(self.Spatial)
 		
 		#if the creator element is set, make the dc:title tag
 		if self.Creator:
@@ -92,8 +95,9 @@ class DublinCore(dublinCoreMetadata):
 			
 		#if the relation element is set, make the dc:relation tag
 		if self.Relation:
-			for relation in self.Relation:
-				xmlOut += '\t<dc:relation>%s</dc:relation>\n' % xml.sax.saxutils.escape(relation)
+		       xmlOut += '\t<dc:relation>%s</dc:relation>\n' % xml.sax.saxutils.escape(self.Relation)
+##			for relation in self.Relation:
+##				xmlOut += '\t<dc:relation>%s</dc:relation>\n' % xml.sax.saxutils.escape(relation)
 			
 		#if the coverage element is set, make the dc:coverage tag
 		if self.Coverage:

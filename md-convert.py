@@ -7,7 +7,7 @@
 from optparse import OptionParser
 from DublinCoreTerms import DublinCore
 import csv
-import os, re
+import os, re,sys
 from sys import argv
 from xml.dom.minidom import Document
 from os.path import basename
@@ -19,9 +19,26 @@ MACREPO_NS = 'http://repository.mcmaster.ca/schema/macrepo/elements/1.0/'
 
 def parse(fn,opt):
 	""" Parse a TSV file """
+	mapdc=dict()
+	fields=list()
 	try:
 		fp = open(fn)
-		fields = re.split(opt.delimiter,fp.readline().rstrip('\n'))
+		ofields = re.split(opt.delimiter,fp.readline().rstrip('\n'))
+
+		if opt.mapfile :
+			r = csv.reader(open(opt.mapfile, "r"),delimiter='>')
+			for row in r:
+				fields.append(row[1].strip())
+		elif opt.config :
+			for of in ofields:
+				mapdc[of]=raw_input('Target field for %s : ' % of.strip())
+                                fields.append(mapdc[of].strip())
+			w = csv.writer(open(opt.config, "w"),delimiter='>')
+			for key, val in mapdc.items():
+				 w.writerow([key, val])
+		else:
+			fields=ofields
+
 		if not opt.delimiter == ',' :
 			tsv = csv.DictReader(fp, fieldnames=fields, delimiter='\t')
 		else:
@@ -31,10 +48,12 @@ def parse(fn,opt):
 		
 		for row in tsv:
 			dc = makedc(row)
-			print '+++ %s' % row['dc:identifier'].strip()
-			writefile(opt.outdir+'/'+"".join(row['dc:identifier'].split()), dc)
-			##xml = makexml(row)
-			##writefile(opt.outdir+'/'+row['dc:identifier'], xml)
+			if 'dc:identifier' in row:
+                            writefile(opt.outdir+'/'+"".join(row['dc:identifier'].split()), dc)
+			else:
+                            print ' ERROR : At least target field dc:identifier must be specified' 
+			    sys.exit()
+
 	except IOError as (errno, strerror):
 		print "Error ({0}): {1}".format(errno, strerror)
 		raise SystemExit
@@ -43,22 +62,19 @@ def parse(fn,opt):
 def makedc(row):
 	""" Generate a Dublin Core XML file from a TSV """
 	metadata = DublinCore()
-	metadata.Contributor = row.get('dc:contributor', '')
-	metadata.Coverage = row.get('dc:coverage', '')
-	metadata.Creator = row.get('dc:creator', '')
-	metadata.Date = row.get('dc:date', '')
-	metadata.Description = row.get('dc:description', '')
-	metadata.Format = row.get('dc:format', '')
-	metadata.Identifier = row.get('dc:identifier', '')
-	metadata.Language = row.get('dc:language', '')
-	metadata.Publisher = row.get('dc:publisher', '')
-	metadata.Relation = row.get('dc:relation', '').split('|')
-	metadata.Rights = row.get('dc:rights', '')
-	metadata.Source = row.get('dc:source', '')
-	metadata.Subject = row.get('dc:subject', '')
-	metadata.Title = row.get('dc:title', '')
-	metadata.Alternative = row.get('dcterms:alternative', '')
-	metadata.Extent = row.get('dcterms:extent', '')
+	with open('mapfiles/dcelements.txt','r') as f:
+		dcelements = f.read().splitlines()
+	for dcelem in dcelements :
+		print 'dcelem %s -- %s' % (dcelem,row.get('dc:'+dcelem,''))
+		
+		setattr(metadata,dcelem.capitalize(),row.get('dc:'+dcelem,''))
+
+	with open('mapfiles/dcterms.txt','r') as f:
+		dcterms = f.read().splitlines()
+	for dcterm in dcterms :
+		print 'dcterm %s -- %s' % (dcterm,row.get('dcterm:'+dcterm,''))
+		setattr(metadata,dcterm.capitalize(),row.get('dcterm:'+dcterm,''))
+
 	return metadata
 
 def makexml(row):
@@ -93,23 +109,26 @@ def chkarg(arg):
 	""" Was a TSV file specified? """
 	return False if len(arg) < 2 else True
 
-def usage():
-	""" Print a nice usage message """
-	print "Usage: bin/python " + basename(__file__) + " <filename>.tsv"
-
-if __name__ == "__main__":
-
-	parser = OptionParser()
+def main():
+	usage = "Usage : %prog [options] SOURCE"
+	parser = OptionParser(usage=usage)
 	parser.add_option("-o", "--outdir", dest="outdir", default='outdata',
-                  help="output directory for Dublincore XML files", metavar="FILE")
-	parser.add_option("-d", "--delimiter",
-                  default=',',help="the delimiter used in the original data")
+                  help="output directory for Dublincore XML files", metavar="OUTDIR")
+	parser.add_option("-c", "--config",
+                  help="configure mapping on the fly and store in MAPFILE", metavar="MAPFILE")
+	parser.add_option("-d", "--delimiter",default=',',
+		  help="the delimiter used in the original data", metavar="DELIMITER")
 	parser.add_option("-m", "--mapfile",
-                  default='mapfiles/plants2DC.txt',help="the file that specifies the mapping from original to DC fields")
+		  help="The file that specifies the mapping from original to DC fields")
 
 	(options, args) = parser.parse_args()
 
-	if chkarg(argv):
-		parse(argv[1],options)
-	else:
+	if len(args) != 1:
+		parser.error("Incorrect number of arguments")
 		usage()
+	else:
+		parse(args[0],options)
+
+if __name__ == "__main__":
+	main()
+
