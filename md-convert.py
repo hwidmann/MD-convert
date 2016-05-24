@@ -65,15 +65,12 @@ def makedc(row):
 	with open('mapfiles/dcelements.txt','r') as f:
 		dcelements = f.read().splitlines()
 	for dcelem in dcelements :
-		print 'dcelem %s -- %s' % (dcelem,row.get('dc:'+dcelem,''))
-		
 		setattr(metadata,dcelem.capitalize(),row.get('dc:'+dcelem,''))
 
 	with open('mapfiles/dcterms.txt','r') as f:
 		dcterms = f.read().splitlines()
 	for dcterm in dcterms :
-		print 'dcterm %s -- %s' % (dcterm,row.get('dcterm:'+dcterm,''))
-		setattr(metadata,dcterm.capitalize(),row.get('dcterm:'+dcterm,''))
+		setattr(metadata,dcterm.capitalize(),row.get('dcterms:'+dcterm,''))
 
 	return metadata
 
